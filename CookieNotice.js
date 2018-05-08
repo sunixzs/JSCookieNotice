@@ -17,19 +17,23 @@
             this.language = {
                 de: {
                     content_header: 'Cookie Notiz',
-                    content_1: 'Diese Domain nutzt Cookies, um Ihnen einen besseren Service gewähr­­leisten zu können. Mit der Nutzung unserer Seite erklären Sie sich mit unserer ',
+                    content_before_link: 'Diese Domain nutzt Cookies, um Ihnen einen besseren Service gewähr­­leisten zu können. Mit der Nutzung unserer Seite erklären Sie sich mit unserer ',
                     content_link: 'Cookie- und Daten­schutz­­richt­linie',
-                    content_2: ' einverstanden.',
+                    content_after_link: ' einverstanden.',
                     content_button: 'OK'
                 },
                 en: {
                     content_header: 'Cookie Notice',
-                    content_1: 'This domain uses cookies to ensure you a better service. By using our site, you agree to our ',
+                    content_before_link: 'This domain uses cookies to ensure you a better service. By using our site, you agree to our ',
                     content_link: 'cookie and privacy policy',
-                    content_2: '.',
+                    content_after_link: '.',
                     content_button: 'OK'
                 }
             };
+
+            if (typeof this.language[this.settings.language] === "undefined") {
+                this.language[this.settings.language] = {};
+            }
 
             // overwrite default settings
             if (typeof params === "object") {
@@ -115,7 +119,7 @@
 
             var content1 = document.createElement("span");
             content1.setAttribute("class", "content-1");
-            var tn = document.createTextNode(this.getLanguage("content_1"));
+            var tn = document.createTextNode(this.getLanguage("content_before_link"));
             content1.appendChild(tn);
             notice.appendChild(content1);
 
@@ -129,7 +133,7 @@
 
             var content2 = document.createElement("span");
             content2.setAttribute("class", "content-2");
-            var tn = document.createTextNode(this.getLanguage("content_2"));
+            var tn = document.createTextNode(this.getLanguage("content_after_link"));
             content2.appendChild(tn);
             notice.appendChild(content2);
 
