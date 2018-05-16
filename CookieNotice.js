@@ -6,51 +6,41 @@
      * that the cookie notice was confirmed.
      * If there was no confirmation the stylesheet and content will be loaded and
      * added to the dom.
+     * 
+     * @param {object} params 
+     * @returns {object} this
      */
-    class CookieNotice {
-        /**
-         * @param {object} params 
-         */
-        constructor(params) {
-            this.settings = {
-                storageName: "CookieNotice",
-                storageLifetime: null, // seconds or nothing for "forever"
-                uriStyles: 'Plugins/CookieNotice/styles.css',
-                uriContent: 'Plugins/CookieNotice/Content.html',
-                buttonQuerySelector: '#cookie-notice-confirmed', // button to hide the notice and to mark as confirmed
-                container: document.createElement("DIV"), // element, where the content will be appended
-                onContentLoaded: function (self) {
+    function CookieNotice(params) {
+        this.settings = {
+            storageName: "CookieNotice",
+            storageLifetime: null, // seconds or nothing for "forever"
+            uriStyles: 'Plugins/CookieNotice/styles.css',
+            uriContent: 'Plugins/CookieNotice/Content.html',
+            buttonQuerySelector: '#cookie-notice-confirmed', // button to hide the notice and to mark as confirmed
+            container: document.createElement("DIV"), // element, where the content will be appended
+            onContentLoaded: function (self) {
 
-                },
-                onButtonClicked: function (self) {
-                    self.removeContainer();
-                }
-            };
-
-            // overwrite default settings
-            if (typeof params === "object") {
-                for (var key in params) {
-                    if (params.hasOwnProperty(key) && typeof this.settings[key] !== "undefined") {
-                        this.settings[key] = params[key];
-                    }
-                }
+            },
+            onButtonClicked: function (self) {
+                self.removeContainer();
             }
-
-            this.hasStorage = ("localStorage" in window && window.localStorage);
-
-            // load styles and content, if the notice was not confirmed
-            if (!this.isConfirmed()) {
-                this.loadStyles();
-                this.loadContent();
-            }
-
-            return this;
         };
+
+        // overwrite default settings
+        if (typeof params === "object") {
+            for (var key in params) {
+                if (params.hasOwnProperty(key) && typeof this.settings[key] !== "undefined") {
+                    this.settings[key] = params[key];
+                }
+            }
+        }
+
+        this.hasStorage = ("localStorage" in window && window.localStorage);
 
         /**
          * stores the current timestamp.
          */
-        setConfirmed() {
+        this.setConfirmed = function () {
             var useCookie = !this.hasStorage;
             if (!useCookie) {
                 try {
@@ -69,10 +59,10 @@
          * Finds the stored timestamp and compares it with lifetime.
          * @returns {boolean}
          */
-        isConfirmed() {
+        this.isConfirmed = function () {
             var storedTime = 0;
             var useCookie = !this.hasStorage;
-            
+
             if (!useCookie) {
                 try {
                     storedTime = parseInt(localStorage.getItem(this.settings.storageName));
@@ -82,7 +72,7 @@
                 } catch (e) {
                     useCookie = true;
                 }
-            } 
+            }
 
             if (useCookie) {
                 var nameEQ = this.settings.storageName + "=";
@@ -114,7 +104,7 @@
         /**
          * removes the container from dom
          */
-        removeContainer() {
+        this.removeContainer = function () {
             if (this.settings.container) {
                 this.settings.container.parentNode.removeChild(this.settings.container);
             }
@@ -123,7 +113,7 @@
         /**
          * Loads the CSS-file
          */
-        loadStyles() {
+        this.loadStyles = function () {
             if (!this.settings.uriStyles) {
                 return;
             }
@@ -137,7 +127,7 @@
         /**
          * Loads the xhr-content for container.
          */
-        loadContent() {
+        this.loadContent = function () {
             // load content
             var CN = this;
             var request = new XMLHttpRequest();
@@ -169,6 +159,12 @@
             });
             request.send();
         };
+
+        // load styles and content, if the notice was not confirmed
+        if (!this.isConfirmed()) {
+            this.loadStyles();
+            this.loadContent();
+        }
     };
 
     if (typeof define === 'function' && define.amd) {
