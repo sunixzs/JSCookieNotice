@@ -1,0 +1,47 @@
+#cookie-notice-wrap {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 10000;
+}
+
+.cookie-notice {
+    color: white;
+    background-color: rgba(0,0,0,0.8);
+    font-size: 80%;
+    padding-top: 1em;
+    padding-bottom: 1em;
+
+    span {
+        display: block;
+    }
+
+    .header {
+        font-weight: 700;
+    }
+
+    .content-wrap {
+        position: relative;
+    }
+
+    .content {
+        margin-right: 5em;
+    }
+
+    #cookie-notice-confirmed {
+        position: absolute;
+        top: 50%;
+        right: 0;
+        transform: translateY(-50%);
+
+        padding: 0.2em 0.5em;
+        border: 1px solid white;
+        cursor: pointer;
+
+        &:hover {
+            background-color: white;
+            color: black;
+        }
+    }
+}
