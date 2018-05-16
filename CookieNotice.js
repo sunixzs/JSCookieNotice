@@ -1,39 +1,31 @@
-(function (window) {
+(function (window, document) {
     'use strict';
 
+    /**
+     * Checks, if in storage (localStorage if available or Cookie) an entry exists
+     * that the cookie notice was confirmed.
+     * If there was no confirmation the stylesheet and content will be loaded and
+     * added to the dom.
+     */
     class CookieNotice {
-        constructor(params, languageParams) {
+        /**
+         * @param {object} params 
+         */
+        constructor(params) {
             this.settings = {
-                cookieName: 'cn_confirmed',
-                cookieValue: 'yes',
-                cookieLivetime: 30758400000, // one year (24 * 60 * 60 * 365 * 1000)
-                uriDataPrivacy: '/datenschutz',
-                uriStyles: 'CookieNotice.css',
-                language: 'de',
-                container: document.querySelector("body"), // the element the notice should be added
-                position: 'append' // either append or prepend
-            };
+                storageName: "CookieNotice",
+                storageLifetime: null, // seconds or nothing for "forever"
+                uriStyles: 'Plugins/CookieNotice/styles.css',
+                uriContent: 'Plugins/CookieNotice/Content.html',
+                buttonQuerySelector: '#cookie-notice-confirmed', // button to hide the notice and to mark as confirmed
+                container: document.createElement("DIV"), // element, where the content will be appended
+                onContentLoaded: function (self) {
 
-            this.language = {
-                de: {
-                    content_header: 'Cookie Notiz',
-                    content_before_link: 'Diese Domain nutzt Cookies, um Ihnen einen besseren Service gewähr­­leisten zu können. Mit der Nutzung unserer Seite erklären Sie sich mit unserer ',
-                    content_link: 'Cookie- und Daten­schutz­­richt­linie',
-                    content_after_link: ' einverstanden.',
-                    content_button: 'OK'
                 },
-                en: {
-                    content_header: 'Cookie Notice',
-                    content_before_link: 'This domain uses cookies to ensure you a better service. By using our site, you agree to our ',
-                    content_link: 'cookie and privacy policy',
-                    content_after_link: '.',
-                    content_button: 'OK'
+                onButtonClicked: function (self) {
+                    self.removeContainer();
                 }
             };
-
-            if (typeof this.language[this.settings.language] === "undefined") {
-                this.language[this.settings.language] = {};
-            }
 
             // overwrite default settings
             if (typeof params === "object") {
@@ -44,40 +36,93 @@
                 }
             }
 
-            // set language
-            if (typeof languageParams === "object") {
-                for (var key in languageParams) {
-                    if (languageParams.hasOwnProperty(key) && typeof this.language[this.settings.language][key] !== "undefined") {
-                        this.language[this.settings.language][key] = languageParams[key];
-                    }
-                }
+            this.hasStorage = ("localStorage" in window && window.localStorage);
+
+            // load styles and content, if the notice was not confirmed
+            if (!this.isConfirmed()) {
+                this.loadStyles();
+                this.loadContent();
             }
 
             return this;
         };
 
-        isConfirmed() {
-            var name = this.settings.cookieName + "=";
-            var decodedCookie = decodeURIComponent(document.cookie);
-            var ca = decodedCookie.split(';');
-            for (var i = 0; i < ca.length; i++) {
-                var c = ca[i];
-                while (c.charAt(0) == ' ') {
-                    c = c.substring(1);
-                }
-                if (c.indexOf(name) == 0) {
-                    return this.setting.cookieValue === c.substring(name.length, c.length) ? true : false;
+        /**
+         * stores the current timestamp.
+         */
+        setConfirmed() {
+            var useCookie = !this.hasStorage;
+            if (!useCookie) {
+                try {
+                    localStorage.setItem(this.settings.storageName, new Date().getTime());
+                } catch (e) {
+                    useCookie = true;
                 }
             }
-            return false;
+
+            if (useCookie) {
+                document.cookie = this.settings.storageName + "=" + new Date().getTime() + "; expires=Thu, 31 Dec 2099 23:59:59 UTC; path=/";
+            }
         };
 
-        setConfirmed() {
-            var d = new Date();
-            d.setTime(d.getTime() + this.settings.cookieLivetime);
-            document.cookie = this.settings.cookieName + "=" + this.settings.cookieValue + ";expires=" + d.toUTCString() + ";path=/";
+        /**
+         * Finds the stored timestamp and compares it with lifetime.
+         * @returns {boolean}
+         */
+        isConfirmed() {
+            var storedTime = 0;
+            var useCookie = !this.hasStorage;
+            
+            if (!useCookie) {
+                try {
+                    storedTime = parseInt(localStorage.getItem(this.settings.storageName));
+                    if (!storedTime) {
+                        return false;
+                    }
+                } catch (e) {
+                    useCookie = true;
+                }
+            } 
+
+            if (useCookie) {
+                var nameEQ = this.settings.storageName + "=";
+                var ca = document.cookie.split(';');
+                for (var i = 0; i < ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0) === ' ') {
+                        c = c.substring(1, c.length);
+                    }
+                    if (c.indexOf(nameEQ) === 0) {
+                        storedTime = parseInt(c.substring(nameEQ.length, c.length));
+                    }
+                }
+
+                if (!storedTime) {
+                    return false;
+                }
+            }
+
+            if (this.settings.storageLifetime) {
+                var expirationDate = new Date();
+                expirationDate.setTime(storedTime - (this.settings.storageLifetime * 1000));
+                return storedTime > expirationDate.getTime();
+            } else {
+                return true;
+            }
         };
 
+        /**
+         * removes the container from dom
+         */
+        removeContainer() {
+            if (this.settings.container) {
+                this.settings.container.parentNode.removeChild(this.settings.container);
+            }
+        };
+
+        /**
+         * Loads the CSS-file
+         */
         loadStyles() {
             if (!this.settings.uriStyles) {
                 return;
@@ -86,92 +131,45 @@
             f.setAttribute("rel", "stylesheet");
             f.setAttribute("type", "text/css");
             f.setAttribute("href", this.settings.uriStyles);
-            document.querySelector('head').appendChild(f);
+            document.querySelector("head").appendChild(f);
         };
 
-        getLanguage(key) {
-            if (typeof this.language[this.settings.language][key] === "string") {
-                return this.language[this.settings.language][key];
-            } else {
-                return "";
-            }
+        /**
+         * Loads the xhr-content for container.
+         */
+        loadContent() {
+            // load content
+            var CN = this;
+            var request = new XMLHttpRequest();
+            request.open("GET", this.settings.uriContent);
+            request.addEventListener('load', function (event) {
+                if (request.status >= 200 && request.status < 300) {
+                    CN.settings.container.innerHTML += request.responseText;
+
+                    if (typeof CN.settings.onContentLoaded === "function") {
+                        CN.settings.onContentLoaded(CN);
+                    }
+
+                    var btns = document.querySelectorAll(CN.settings.buttonQuerySelector);
+                    if (btns.length) {
+                        for (var b = 0; b < btns.length; b++) {
+                            btns[b].addEventListener("click", function () {
+                                CN.setConfirmed();
+                                if (typeof CN.settings.onButtonClicked === "function") {
+                                    CN.settings.onButtonClicked(CN);
+                                } else {
+                                    CN.removeContainer();
+                                }
+                            }, false);
+                        }
+                    }
+                } else {
+                    console.warn(request.statusText, request.responseText);
+                }
+            });
+            request.send();
         };
-
-        showNotice() {
-            var wrap = document.createElement("div");
-            wrap.setAttribute("class", "cookie-notice-wrap");
-
-            var cn = document.createElement("div");
-            cn.setAttribute("class", "cookie-notice");
-            wrap.appendChild(cn);
-
-            if (this.getLanguage("content_header")) {
-                var header = document.createElement("span");
-                header.setAttribute("class", "content-header");
-                var tn = document.createTextNode(this.getLanguage("content_header"));
-                header.appendChild(tn);
-                cn.appendChild(header);
-            }
-
-            var notice = document.createElement("span");
-            notice.setAttribute("class", "notice");
-            cn.appendChild(notice);
-
-            var content1 = document.createElement("span");
-            content1.setAttribute("class", "content-1");
-            var tn = document.createTextNode(this.getLanguage("content_before_link"));
-            content1.appendChild(tn);
-            notice.appendChild(content1);
-
-            var link = document.createElement("a");
-            link.setAttribute("class", "content-link");
-            link.setAttribute("href", this.settings.uriDataPrivacy);
-            link.setAttribute("target", "_blank");
-            var tn = document.createTextNode(this.getLanguage("content_link"));
-            link.appendChild(tn);
-            notice.appendChild(link);
-
-            var content2 = document.createElement("span");
-            content2.setAttribute("class", "content-2");
-            var tn = document.createTextNode(this.getLanguage("content_after_link"));
-            content2.appendChild(tn);
-            notice.appendChild(content2);
-
-            var buttonWrap = document.createElement("span");
-            buttonWrap.setAttribute("class", "button-wrap");
-            notice.appendChild(buttonWrap);
-
-            var button = document.createElement("a");
-            button.setAttribute("href", "#");
-            button.setAttribute("class", "button");
-            var tn = document.createTextNode(this.getLanguage("content_button"));
-            button.appendChild(tn);
-            var self = this;
-            button.addEventListener("click", function (evt) {
-                evt.preventDefault();
-                self.setConfirmed();
-                self.settings.container.removeChild(wrap);
-                return false;
-            }, false);
-            buttonWrap.appendChild(button);
-
-            if (this.settings.position === "prepend") {
-                this.settings.container.insertBefore(wrap, this.settings.container.firstChild);
-            } else {
-                this.settings.container.appendChild(wrap);
-            }
-        };
-
-        init() {
-            if (this.isConfirmed()) {
-                return true;
-            }
-
-            this.loadStyles();
-            this.showNotice();
-            return false;
-        };
-    }
+    };
 
     if (typeof define === 'function' && define.amd) {
         define(function () {
@@ -181,4 +179,4 @@
         window.CookieNotice = CookieNotice;
     }
 
-})(window);
+})(window, document);
