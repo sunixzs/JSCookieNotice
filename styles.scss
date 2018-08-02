@@ -8,8 +8,9 @@
 
 .cookie-notice {
     color: white;
-    background-color: rgba(0,0,0,0.8);
-    font-size: 80%;
+    background-color: rgba(0, 0, 0, 0.8);
+    font-size: 12px;
+    line-height: 1.4;
     padding-top: 1em;
     padding-bottom: 1em;
 
@@ -27,6 +28,13 @@
 
     .content {
         margin-right: 5em;
+    }
+
+    html.no-touch & a {
+        &:hover {
+            color: white;
+            text-decoration: dotted;
+        }
     }
 
     #cookie-notice-confirmed {
