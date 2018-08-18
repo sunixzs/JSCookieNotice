@@ -1,0 +1,11 @@
+{
+    "name": "sunixzs/JSCookieNotice",
+    "description": "Just another cookie notice script",
+    "keywords": ["cookies", "notice"],
+    "authors": [
+        {
+            "name": "sunixzs",
+            "email": "sunixzs@gmail.com"
+        }
+    ]
+}
