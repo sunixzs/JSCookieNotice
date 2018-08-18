@@ -7,5 +7,18 @@
             "name": "sunixzs",
             "email": "sunixzs@gmail.com"
         }
-    ]
+    ],
+    "extra": {
+        "component": {
+            "scripts": [
+                "CookieNotice.js"
+            ],
+            "files": [
+                "CookieNotice.min.js",
+                "styles.css",
+                "styles.scss",
+                "content.html"
+            ]
+        }
+    }
 }
