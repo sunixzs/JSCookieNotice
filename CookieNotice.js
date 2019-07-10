@@ -134,11 +134,10 @@
             request.open("GET", this.settings.uriContent);
             request.addEventListener('load', function (event) {
                 if (request.status >= 200 && request.status < 300) {
-                    CN.settings.container.innerHTML += request.responseText;
-
                     if (typeof CN.settings.onContentLoaded === "function") {
                         CN.settings.onContentLoaded(CN);
                     }
+                    CN.settings.container.innerHTML += request.responseText;
 
                     var btns = document.querySelectorAll(CN.settings.buttonQuerySelector);
                     if (btns.length) {
